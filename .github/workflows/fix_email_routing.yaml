@@ -1,7 +1,6 @@
 name: Fix Email Routing
 on:
   workflow_dispatch:
-
 jobs:
   fix:
     runs-on: ubuntu-latest
@@ -14,63 +13,32 @@ jobs:
           set -e
           ACC="$CLOUDFLARE_ACCOUNT_ID"
           TOK="$CLOUDFLARE_API_TOKEN"
-          echo "::group::zone"
-          ZID=$(curl -sS "https://api.cloudflare.com/client/v4/zones?name=5i.wiki" -H "Authorization: Bearer $TOK" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d['result'][0]['id'])")
+          ZID=$(curl -sS "https://api.cloudflare.com/client/v4/zones?name=5i.wiki" -H "Authorization: Bearer $TOK" | python3 -c "import json,sys;print(json.load(sys.stdin)['result'][0]['id'])")
           echo "zone_id=$ZID"
-          echo "::endgroup::"
-
-          echo "::group::email routing status"
+          echo "--- email routing status ---"
           curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing" -H "Authorization: Bearer $TOK"
           echo
-          echo "::endgroup::"
-
-          echo "::group::enable email routing"
+          echo "--- enable email routing ---"
           curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/enable" -H "Authorization: Bearer $TOK"
           echo
-          echo "::endgroup::"
-
-          echo "::group::existing rules"
-          curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/rules" -H "Authorization: Bearer $TOK" > /tmp/rules.json || true
-          cat /tmp/rules.json | head -c 3000
+          echo "--- existing rules ---"
+          curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/rules" -H "Authorization: Bearer $TOK" > /tmp/rules.json
+          cat /tmp/rules.json | head -c 2000
           echo
-          echo "::endgroup::"
-
-          echo "::group::workers"
+          echo "--- workers with email handler ---"
           curl -sS "https://api.cloudflare.com/client/v4/accounts/$ACC/workers/scripts?per_page=50" -H "Authorization: Bearer $TOK" | python3 -c "import json,sys;d=json.load(sys.stdin);[print(s['id'],'handlers=',s.get('handlers')) for s in d.get('result',[])]"
-          echo "::endgroup::"
-
-          echo "::group::delete old catch-all rules"
-          python3 - <<'PY'
-import json, subprocess, os
-tok=os.environ["CLOUDFLARE_API_TOKEN"]; zid=os.environ["ZID"]
-try:
-    rules=json.load(open("/tmp/rules.json"))["result"]
-except Exception:
-    rules=[]
-for r in rules:
-    matchers=r.get("matchers") or []
-    if any((m.get("type")=="all") for m in matchers):
-        rid=r["id"]
-        print("deleting catch-all rule", rid, r.get("actions"))
-        subprocess.run(["curl","-sS","-X","DELETE",
-            f"https://api.cloudflare.com/client/v4/zones/{zid}/email/routing/rules/{rid}",
-            "-H",f"Authorization: Bearer {tok}"], check=False)
-PY
-          echo "::endgroup::"
-
-          echo "::group::create catch-all -> worker"
+          echo "--- delete old catch-all rules ---"
+          python3 -c 'import json;d=json.load(open("/tmp/rules.json"));[print(r["id"]) for r in d.get("result",[]) if any(m.get("type")=="all" for m in r.get("matchers",[]))]' > /tmp/oldids.txt
+          while read -r rid; do
+            echo "deleting $rid"
+            curl -sS -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/rules/$rid" -H "Authorization: Bearer $TOK"
+            echo
+          done < /tmp/oldids.txt
+          echo "--- create catch-all -> cloudflare_temp_email ---"
           curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/rules" \
             -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
             -d '{"matchers":[{"type":"all"}],"actions":[{"type":"send_to_worker","value":["cloudflare_temp_email"]}],"enabled":true}'
           echo
-          echo "::endgroup::"
-
-          echo "::group::verify rules"
+          echo "--- verify ---"
           curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/email/routing/rules" -H "Authorization: Bearer $TOK"
           echo
-          echo "::endgroup::"
-
-          echo "::group::dns mx/txt"
-          curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/dns_records?per_page=100&type=MX" -H "Authorization: Bearer $TOK" | python3 -c "import json,sys;d=json.load(sys.stdin);[print(r['name'],r['content'],r['priority']) for r in d.get('result',[])]"
-          curl -sS "https://api.cloudflare.com/client/v4/zones/$ZID/dns_records?per_page=100&type=TXT" -H "Authorization: Bearer $TOK" | python3 -c "import json,sys;d=json.load(sys.stdin);[print(r['name'],r['content'][:80]) for r in d.get('result',[]) if 'spf' in r.get('content','') or 'mx.cloudflare' in r.get('content','')]"
-          echo "::endgroup::"

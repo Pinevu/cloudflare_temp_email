@@ -1,3 +1,4 @@
+import { getInboxHtml } from './inbox_ui';
 import { Context, Hono } from 'hono'
 import { cors } from 'hono/cors';
 import { jwt } from 'hono/jwt'
@@ -261,6 +262,10 @@ app.route('/', adminApi)
 app.route('/', apiSendMail)
 app.route('/', telegramApi)
 
+app.get('/inbox', async (c) => c.html(getInboxHtml()))
+app.get('/dashboard', async (c) => c.html(getInboxHtml()))
+app.get('/mail', async (c) => c.html(getInboxHtml()))
+
 const health_check = async (c: Context<HonoCustomType>) => {
 	const lang = c.req.raw.headers.get("x-lang") || c.env.DEFAULT_LANG;
 	const msgs = i18n.getMessages(lang);
@@ -276,7 +281,13 @@ const health_check = async (c: Context<HonoCustomType>) => {
 	return c.text("OK");
 }
 
-app.get('/', health_check)
+app.get('/', async (c) => {
+	const accept = c.req.raw.headers.get("accept") || "";
+	if (accept.includes("text/html")) {
+		return c.html(getInboxHtml());
+	}
+	return health_check(c);
+})
 app.get('/health_check', health_check)
 app.all('/*', async c => c.text("Not Found", 404))
 

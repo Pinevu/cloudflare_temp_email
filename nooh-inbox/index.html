@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <title>TempMail - 临时邮箱</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===================================================
+       Precision Theme Tokens (Referencing mem0 Color System)
+       =================================================== */
+    :root {
+      /* Light Mode Palette */
+      --page-bg: #F5F6F9;
+      --header-bg: rgba(255, 255, 255, 0.94);
+      --header-border: #E5E7EB;
+
+      --card-bg: #FFFFFF;
+      --card-border: #E5E7EB;
+      --card-hover-border: #CBD5E1;
+      --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+
+      --text-main: #1E293B;
+      --text-sub: #475569;
+      --text-muted: #94A3B8;
+
+      --input-bg: #FFFFFF;
+      --input-border: #D1D5DB;
+      --input-text: #1E293B;
+
+      --badge-yellow-bg: #FEF3C7;
+      --badge-yellow-border: #FDE68A;
+      --badge-yellow-text: #B45309;
+
+      --btn-yellow-bg: #FACC15;
+      --btn-yellow-hover: #EAB308;
+      --btn-yellow-text: #000000;
+
+      --btn-sec-bg: #FFFFFF;
+      --btn-sec-border: #D1D5DB;
+      --btn-sec-text: #374151;
+
+      --otp-box-bg: #F8FAFC;
+      --otp-box-border: #E2E8F0;
+      --otp-box-text: #1E293B;
+
+      --del-btn-bg: #FEE2E2;
+      --del-btn-text: #DC2626;
+
+      --drawer-mask: rgba(15, 23, 42, 0.45);
+      --drawer-handle: #CBD5E1;
+    }
+
+    html.dark, body.dark {
+      /* Dark Mode Palette (Identical to reference mem0 screenshot) */
+      --page-bg: #111625;
+      --header-bg: rgba(17, 22, 37, 0.94);
+      --header-border: rgba(255, 255, 255, 0.08);
+
+      --card-bg: #1A2238;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(255, 255, 255, 0.16);
+      --card-shadow: none;
+
+      --text-main: #F8FAFC;
+      --text-sub: #CBD5E1;
+      --text-muted: #828FA3;
+
+      --input-bg: #0C101C;
+      --input-border: #242E49;
+      --input-text: #F8FAFC;
+
+      --badge-yellow-bg: rgba(234, 179, 8, 0.15);
+      --badge-yellow-border: rgba(234, 179, 8, 0.35);
+      --badge-yellow-text: #FACC15;
+
+      --btn-yellow-bg: #FACC15;
+      --btn-yellow-hover: #EAB308;
+      --btn-yellow-text: #000000;
+
+      --btn-sec-bg: rgba(36, 46, 73, 0.7);
+      --btn-sec-border: rgba(255, 255, 255, 0.1);
+      --btn-sec-text: #CBD5E1;
+
+      --otp-box-bg: rgba(12, 16, 28, 0.85);
+      --otp-box-border: rgba(255, 255, 255, 0.1);
+      --otp-box-text: #F8FAFC;
+
+      --del-btn-bg: rgba(239, 68, 68, 0.18);
+      --del-btn-text: #F87171;
+
+      --drawer-mask: rgba(0, 0, 0, 0.75);
+      --drawer-handle: #334155;
+    }
+
+    /* Core Application Rules */
+    html, body {
+      background-color: var(--page-bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 100vh;
+      overflow-x: hidden;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    *, *:before, *:after {
+      box-sizing: border-box;
+    }
+
+    .safe-top { padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); }
+    .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
+
+    /* Component Classes */
+    .app-header {
+      background: var(--header-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--header-border);
+    }
+
+    .app-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .app-card:hover {
+      border-color: var(--card-hover-border);
+    }
+
+    .app-input {
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
+    }
+
+    .badge-yellow {
+      background-color: var(--badge-yellow-bg);
+      border: 1px solid var(--badge-yellow-border);
+      color: var(--badge-yellow-text);
+    }
+
+    .btn-yellow {
+      background-color: var(--btn-yellow-bg);
+      color: var(--btn-yellow-text);
+    }
+    .btn-yellow:hover {
+      background-color: var(--btn-yellow-hover);
+    }
+
+    .btn-sec {
+      background-color: var(--btn-sec-bg);
+      border: 1px solid var(--btn-sec-border);
+      color: var(--btn-sec-text);
+    }
+
+    .del-btn {
+      background-color: var(--del-btn-bg);
+      color: var(--del-btn-text);
+    }
+
+    .otp-capsule {
+      background-color: var(--otp-box-bg);
+      border: 1px solid var(--otp-box-border);
+      color: var(--otp-box-text);
+    }
+
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 9999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-2.5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
+
+  <!-- Header: Tight, Responsive & Guaranteed No Overflow on iPhone -->
+  <header class="sticky top-0 z-40 app-header safe-top px-3 py-2 w-full overflow-hidden">
+    <div class="max-w-4xl mx-auto flex items-center justify-between gap-1 w-full">
+      <!-- Left: Compact Logo, Title, Counter Badge -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center text-white text-xs shadow-sm shrink-0">
+          <i class="fa-solid fa-inbox"></i>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="font-bold text-sm sm:text-base tracking-tight" style="color: var(--text-main);">TempMail</span>
+          <span id="totalBadge" class="badge-yellow text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
+            <span id="totalMailsCount">0</span> 封
+          </span>
+        </div>
+      </div>
+
+      <!-- Right: Action Icons (Compact 28px buttons with safe spacing) -->
+      <div class="flex items-center gap-1 shrink-0">
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" id="themeToggleBtn" class="w-7 h-7 rounded-lg flex items-center justify-center btn-sec text-xs active:scale-90 transition-transform" title="切换深色/浅色模式">
+          <i id="themeIcon" class="fa-regular fa-sun text-amber-500 text-[11px]"></i>
+        </button>
+
+        <!-- Polling Indicator / Countdown -->
+        <button id="pollToggleBtn" onclick="togglePolling()" class="h-7 flex items-center gap-1 text-[11px] font-semibold px-1.5 rounded-lg btn-sec whitespace-nowrap active:scale-95" title="自动刷新">
+          <i id="pollIcon" class="fa-solid fa-arrows-rotate text-emerald-500 text-[10px]"></i>
+          <span id="pollCountdown" class="font-mono text-emerald-500 font-bold text-xs w-3 text-center">5</span>
+        </button>
+
+        <!-- Manual Refresh -->
+        <button onclick="fetchMails(true)" class="w-7 h-7 rounded-lg flex items-center justify-center btn-sec text-xs active:scale-90" title="立即刷新">
+          <i class="fa-solid fa-rotate-right text-[11px]"></i>
+        </button>
+
+        <!-- Settings Button -->
+        <button onclick="openSettingsModal()" class="w-7 h-7 rounded-lg flex items-center justify-center btn-sec text-xs active:scale-90" title="设置与更多">
+          <i class="fa-solid fa-gear text-[11px]"></i>
+        </button>
+
+        <!-- Lock Button -->
+        <button onclick="lockConsole()" class="w-7 h-7 rounded-lg flex items-center justify-center del-btn text-xs active:scale-90" title="锁定控制台">
+          <i class="fa-solid fa-lock text-[11px]"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-3 flex flex-col gap-2.5">
+    <!-- Top Search Bar (1:1 Reference Style with mem0, fully editable!) -->
+    <div class="flex items-center gap-2 w-full">
+      <!-- Search Input -->
+      <div class="flex-1 relative flex items-center min-w-0">
+        <span class="absolute left-3.5 text-xs pointer-events-none" style="color: var(--text-muted);">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </span>
+        <input id="searchInput" type="text" placeholder="搜索邮箱，如：偏好、配置、5i.wiki..." 
+               onkeydown="if(event.key==='Enter') executeSearch()"
+               class="w-full pl-9 pr-7 py-2.5 rounded-xl text-xs sm:text-sm font-mono app-input focus:outline-none transition-colors">
+        <button onclick="clearSearchInput()" id="clearSearchBtn" class="absolute right-2.5 text-xs text-slate-400 hover:text-slate-600 hidden" title="清空搜索">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Yellow '搜索' Button (Matching mem0 reference) -->
+      <button onclick="executeSearch()" class="px-4 py-2.5 btn-yellow text-xs sm:text-sm font-bold rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1 shrink-0">
+        <span>搜索</span>
+      </button>
+
+      <!-- '全部' Button (Reset search and show all) -->
+      <button onclick="clearAllFilter()" class="px-3.5 py-2.5 btn-sec text-xs sm:text-sm font-bold rounded-xl active:scale-95 transition-colors shrink-0" title="查看全部邮件">
+        <span>全部</span>
+      </button>
+    </div>
+
+    <!-- Quick Generator Card: Dedicated action to create new email & copy -->
+    <div class="app-card rounded-xl px-3.5 py-2 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-xs font-bold text-amber-500 shrink-0"><i class="fa-solid fa-dice mr-1"></i>临时邮箱:</span>
+        <span id="quickGeneratedAddr" class="font-mono text-xs truncate" style="color: var(--text-sub);">点击右侧获取新临时邮箱</span>
+      </div>
+      <button onclick="generateNewAddress()" class="px-3 py-1.5 btn-sec hover:text-amber-500 active:scale-95 text-xs font-bold rounded-lg shrink-0 flex items-center gap-1 transition-all">
+        <i class="fa-solid fa-plus text-[10px]"></i>
+        <span>生成并复制</span>
+      </button>
+    </div>
+
+    <!-- Search Status Indicator (if filtering) -->
+    <div id="filterStatusBanner" class="hidden flex items-center justify-between text-xs px-1" style="color: var(--text-muted);">
+      <div class="flex items-center gap-1.5">
+        <i class="fa-solid fa-filter text-amber-500 text-[10px]"></i>
+        <span>搜索结果: <strong id="filterKeywordText" class="font-mono font-bold" style="color: var(--text-main);"></strong></span>
+      </div>
+      <button onclick="clearAllFilter()" class="text-xs text-amber-500 hover:underline">清除过滤</button>
+    </div>
+
+    <!-- Mail List Cards (Exact mem0 Reference Style) -->
+    <div id="mailListContainer" class="flex flex-col gap-2.5">
+      <!-- Loading Skeleton -->
+      <div class="app-card rounded-2xl p-4 animate-pulse flex flex-col gap-2">
+        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+        <div class="h-5 bg-slate-200 dark:bg-slate-800 rounded w-3/4"></div>
+        <div class="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/2"></div>
+      </div>
+    </div>
+
+    <!-- Pagination Bar -->
+    <div id="paginationBar" class="flex items-center justify-between text-xs px-2 py-2 hidden" style="color: var(--text-muted);">
+      <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1.5 rounded-lg btn-sec disabled:opacity-40 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-chevron-left mr-1"></i>上一页
+      </button>
+      <span id="pageIndicator" class="font-mono text-xs font-bold" style="color: var(--text-main);">1 / 1</span>
+      <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1.5 rounded-lg btn-sec disabled:opacity-40 disabled:cursor-not-allowed">
+        下一页<i class="fa-solid fa-chevron-right ml-1"></i>
+      </button>
+    </div>
+  </main>
+
+  <!-- Mobile / Desktop Drawer Modal (Clean Slide-up Sheet) -->
+  <div id="mobileDrawer" class="fixed inset-0 z-50 flex flex-col justify-end hidden transition-opacity duration-200" style="background-color: var(--drawer-mask); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+    <div class="app-card rounded-t-3xl max-h-[92vh] max-w-2xl w-full mx-auto flex flex-col border-t safe-bottom shadow-2xl" style="border-color: var(--card-border);">
+      <!-- Top Handle & Close Header -->
+      <div class="pt-2.5 pb-2 px-4 border-b flex items-center justify-between relative" style="border-color: var(--card-border);">
+        <div class="w-10 h-1 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-2" style="background-color: var(--drawer-handle);"></div>
+        <span class="text-xs font-bold pt-1" style="color: var(--text-main);">邮件详情</span>
+        <button onclick="closeMobileDrawer()" class="p-1.5 hover:text-rose-500 pt-1" style="color: var(--text-muted);">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Content -->
+      <div id="mobileDrawerBody" class="p-4 overflow-y-auto custom-scroll flex-1 flex flex-col gap-3.5">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Gate / Password Modal -->
+  <div id="authGateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300" style="background-color: var(--drawer-mask); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);">
+    <div class="app-card rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl flex flex-col items-center text-center gap-3.5">
+      <div class="w-12 h-12 rounded-2xl btn-yellow flex items-center justify-center shadow-md text-xl">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h2 class="text-base font-bold tracking-tight" style="color: var(--text-main);">管理凭据验证</h2>
+        <p class="text-xs mt-0.5" style="color: var(--text-muted);">请输入管理员密码解密访问收件箱。</p>
+      </div>
+
+      <form onsubmit="handleAuthSubmit(event)" class="w-full flex flex-col gap-2.5">
+        <div class="relative flex items-center">
+          <span class="absolute left-3 text-xs" style="color: var(--text-muted);">
+            <i class="fa-solid fa-lock"></i>
+          </span>
+          <input id="authGatePassword" type="password" required autocomplete="current-password" placeholder="请输入管理员密码..." 
+                 class="w-full pl-8 pr-9 py-2.5 rounded-xl text-xs sm:text-sm font-mono app-input focus:outline-none transition-colors">
+          <button type="button" onclick="toggleAuthGatePwdVisibility()" class="absolute right-3" style="color: var(--text-muted);">
+            <i id="authGateEyeIcon" class="fa-regular fa-eye text-xs"></i>
+          </button>
+        </div>
+
+        <div id="authErrorMessage" class="text-[11px] text-rose-500 font-medium hidden flex items-center justify-center gap-1">
+          <i class="fa-solid fa-circle-exclamation text-[10px]"></i>
+          <span id="authErrorText">管理员密码错误</span>
+        </div>
+
+        <button id="authSubmitBtn" type="submit" class="w-full py-2.5 btn-yellow text-xs sm:text-sm font-bold rounded-xl shadow-sm active:scale-95 transition-all flex items-center justify-center gap-1.5">
+          <span>解密并进入</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </form>
+
+      <div class="text-[10px] flex items-center gap-1" style="color: var(--text-muted);">
+        <i class="fa-solid fa-lock text-[9px]"></i>
+        <span>密码仅保存在本设备本地</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (Includes Clear Mails, Sound, Interval, Admin URL) -->
+  <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden" style="background-color: var(--drawer-mask); backdrop-filter: blur(8px);">
+    <div class="app-card rounded-2xl p-4 sm:p-5 max-w-sm w-full shadow-2xl flex flex-col gap-3">
+      <div class="flex items-center justify-between border-b pb-2" style="border-color: var(--card-border);">
+        <h3 class="font-bold text-xs sm:text-sm flex items-center gap-1.5" style="color: var(--text-main);">
+          <i class="fa-solid fa-sliders text-amber-500"></i>
+          <span>控制台设置</span>
+        </h3>
+        <button onclick="closeSettingsModal()" style="color: var(--text-muted);">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-2.5 text-xs">
+        <div>
+          <label class="block font-bold mb-1" style="color: var(--text-muted);">API 地址</label>
+          <input id="settingApiUrl" type="text" class="w-full px-2.5 py-1.5 rounded-xl font-mono text-xs app-input focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold mb-1" style="color: var(--text-muted);">管理员密码</label>
+          <div class="relative flex items-center">
+            <input id="settingAdminPassword" type="password" class="w-full px-2.5 py-1.5 rounded-xl font-mono text-xs app-input focus:outline-none pr-8">
+            <button onclick="togglePasswordVisibility()" class="absolute right-2.5" style="color: var(--text-muted);">
+              <i id="pwdEyeIcon" class="fa-regular fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-1.5 border-t flex items-center justify-between" style="border-color: var(--card-border);">
+          <span class="font-medium" style="color: var(--text-main);">新邮件声音提醒</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input id="settingSoundToggle" type="checkbox" checked class="sr-only peer">
+            <div class="w-8 h-4 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="font-medium" style="color: var(--text-main);">刷新频率</span>
+          <select id="settingPollInterval" class="px-2 py-1 rounded-lg font-mono text-xs app-input focus:outline-none">
+            <option value="3">3 秒 (极速)</option>
+            <option value="5" selected>5 秒 (推荐)</option>
+            <option value="10">10 秒 (省流)</option>
+            <option value="15">15 秒</option>
+          </select>
+        </div>
+
+        <!-- Extra Action Links -->
+        <div class="pt-1.5 border-t flex items-center justify-between" style="border-color: var(--card-border);">
+          <span class="font-medium" style="color: var(--text-main);">清空收件箱</span>
+          <button onclick="closeSettingsModal(); confirmClearMails();" class="text-rose-500 font-bold hover:underline flex items-center gap-1 text-[11px]">
+            <i class="fa-regular fa-trash-can text-[10px]"></i>
+            <span>清空全部邮件</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="font-medium" style="color: var(--text-main);">官方原版系统</span>
+          <a href="https://temp-email-frontend-46w.pages.dev/#/admin" target="_blank" class="text-amber-500 font-bold hover:underline flex items-center gap-1 text-[11px]">
+            <span>打开运维后台</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-1.5 pt-2 border-t" style="border-color: var(--card-border);">
+        <button onclick="closeSettingsModal()" class="px-3 py-1.5 rounded-xl btn-sec text-xs font-semibold">取消</button>
+        <button onclick="saveSettings()" class="px-3.5 py-1.5 rounded-xl btn-yellow text-xs font-bold shadow-sm">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // State Store
+    const state = {
+      theme: localStorage.getItem('tm_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+      apiUrl: localStorage.getItem('tm_api_url') || (window.location.origin.includes('5i.wiki') ? window.location.origin : 'https://temp-email-api.5i.wiki'),
+      adminPassword: localStorage.getItem('tm_admin_pwd') || '',
+      soundEnabled: localStorage.getItem('tm_sound_enabled') !== 'false',
+      pollInterval: parseInt(localStorage.getItem('tm_poll_interval') || '5', 10),
+      isPolling: true,
+      pollTimer: null,
+      countdown: 5,
+      countdownTimer: null,
+      searchKeyword: '',
+      mails: [],
+      totalCount: 0,
+      page: 1,
+      pageSize: 20,
+      knownMailIds: new Set(),
+      currentDetailMail: null
+    };
+
+    // Unified Theme Switcher: Applies class="dark" and style properties synchronously
+    function applyTheme(theme) {
+      state.theme = theme;
+      localStorage.setItem('tm_theme', theme);
+      const root = document.documentElement;
+      const body = document.body;
+      const icon = document.getElementById('themeIcon');
+
+      if (theme === 'dark') {
+        root.classList.add('dark');
+        if (body) body.classList.add('dark');
+        icon.className = 'fa-regular fa-sun text-amber-500 text-[11px]';
+      } else {
+        root.classList.remove('dark');
+        if (body) body.classList.remove('dark');
+        icon.className = 'fa-regular fa-moon text-slate-700 text-[11px]';
+      }
+      renderMailList();
+    }
+
+    function toggleTheme() {
+      applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+      showToast(state.theme === 'dark' ? '已切至深色模式' : '已切至浅色模式', 'info');
+    }
+
+    // Web Audio Chime Sound
+    function playChime() {
+      if (!state.soundEnabled) return;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.12, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.3);
+
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, now + 0.1);
+        gain2.gain.setValueAtTime(0.16, now + 0.1);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.1);
+        osc2.stop(now + 0.55);
+      } catch (e) {
+        console.warn('Audio play failed:', e);
+      }
+    }
+
+    // High Quality Toast
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-600 text-white shadow-emerald-500/20',
+        info: 'bg-slate-900 text-white shadow-slate-900/30 dark:bg-slate-800 dark:border dark:border-slate-700',
+        warning: 'bg-amber-600 text-white shadow-amber-500/20',
+        error: 'bg-rose-600 text-white shadow-rose-500/20'
+      };
+      const icons = {
+        success: '<i class="fa-solid fa-circle-check text-emerald-200"></i>',
+        info: '<i class="fa-solid fa-circle-info text-amber-300"></i>',
+        warning: '<i class="fa-solid fa-triangle-exclamation text-amber-200"></i>',
+        error: '<i class="fa-solid fa-circle-xmark text-rose-200"></i>'
+      };
+
+      toast.className = `px-3.5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs font-semibold pointer-events-auto transition-all duration-300 translate-y-[-10px] opacity-0 ${bgColors[type] || bgColors.info}`;
+      toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => toast.remove(), 250);
+      }, 3000);
+    }
+
+    // Search Functions (Triggered by Enter or '搜索' button)
+    function executeSearch() {
+      const input = document.getElementById('searchInput');
+      const query = input.value.trim();
+      state.searchKeyword = query;
+      state.page = 1;
+
+      const banner = document.getElementById('filterStatusBanner');
+      const kwText = document.getElementById('filterKeywordText');
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      if (query) {
+        banner.classList.remove('hidden');
+        kwText.innerText = query;
+        clearBtn.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+      }
+
+      fetchMails(true);
+    }
+
+    function clearSearchInput() {
+      document.getElementById('searchInput').value = '';
+      executeSearch();
+    }
+
+    function clearAllFilter() {
+      document.getElementById('searchInput').value = '';
+      state.searchKeyword = '';
+      state.page = 1;
+      document.getElementById('filterStatusBanner').classList.add('hidden');
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      fetchMails(true);
+    }
+
+    // Parse MIME Emails
+    function parseMail(item) {
+      const raw = item.raw || '';
+      const headerEndIdx = raw.search(/\r?\n\r?\n/);
+      const rawHeaders = headerEndIdx !== -1 ? raw.slice(0, headerEndIdx) : raw;
+      const rawBody = headerEndIdx !== -1 ? raw.slice(headerEndIdx) : '';
+      const unfoldedHeaders = rawHeaders.replace(/\r?\n[ \t]+/g, ' ');
+
+      const getHeader = (name) => {
+        const regex = new RegExp(`^${name}:[ \t]*(.*)$`, 'mi');
+        const match = unfoldedHeaders.match(regex);
+        return match ? decodeMimeHeader(match[1].trim()) : '';
+      };
+
+      const subject = getHeader('Subject') || '无主题';
+      const from = getHeader('From') || item.source || '';
+      const to = getHeader('To') || item.address || '';
+      const date = getHeader('Date') || item.created_at || '';
+      const contentType = getHeader('Content-Type') || 'text/plain';
+      const transferEncoding = getHeader('Content-Transfer-Encoding') || '';
+
+      const { html, text } = extractMailBodies(rawBody, contentType, transferEncoding);
+      const otpCode = extractVerificationCode(subject, text, html);
+
+      return {
+        id: item.id,
+        messageId: item.message_id,
+        source: from,
+        address: to,
+        rawAddress: item.address,
+        subject: subject,
+        date: date,
+        createdAt: item.created_at,
+        html: html,
+        text: text,
+        raw: raw,
+        otpCode: otpCode
+      };
+    }
+
+    function decodeMimeHeader(str) {
+      if (!str) return '';
+      return str.replace(/=\?([^?]+)\?([BQbq])\?([^?]+)\?=/g, (match, charset, encoding, text) => {
+        try {
+          if (encoding.toUpperCase() === 'B') {
+            const binary = atob(text);
+            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+            return new TextDecoder(charset).decode(bytes);
+          } else if (encoding.toUpperCase() === 'Q') {
+            const unescaped = text.replace(/_/g, ' ');
+            const bytes = [];
+            let i = 0;
+            const n = unescaped.length;
+            while (i < n) {
+              if (unescaped[i] === '=' && i + 2 < n && /^[0-9A-Fa-f]{2}$/.test(unescaped.slice(i + 1, i + 3))) {
+                bytes.push(parseInt(unescaped.slice(i + 1, i + 3), 16));
+                i += 3;
+              } else {
+                bytes.push(unescaped.charCodeAt(i) & 0xff);
+                i++;
+              }
+            }
+            return new TextDecoder(charset).decode(new Uint8Array(bytes));
+          }
+        } catch (e) {
+          return text;
+        }
+        return match;
+      });
+    }
+
+    function extractCharset(contentType) {
+      if (!contentType) return 'utf-8';
+      const m = contentType.match(/charset=["']?([^"';\s]+)["']?/i);
+      let cs = m ? m[1].toLowerCase().trim() : 'utf-8';
+      if (cs === 'utf8') cs = 'utf-8';
+      if (cs === 'gb2312' || cs === 'gbk') cs = 'gb18030';
+      return cs;
+    }
+
+    function decodeTransferEncoding(body, encoding, charset = 'utf-8') {
+      if (!body) return '';
+      encoding = (encoding || '').toLowerCase().trim();
+      charset = (charset || 'utf-8').toLowerCase().trim();
+      if (charset === 'utf8') charset = 'utf-8';
+      if (charset === 'gb2312' || charset === 'gbk') charset = 'gb18030';
+
+      if (encoding === 'quoted-printable') {
+        const clean = body.replace(/=\r?\n/g, '');
+        const bytes = [];
+        let i = 0;
+        const len = clean.length;
+        while (i < len) {
+          if (clean[i] === '=' && i + 2 < len && /^[0-9A-Fa-f]{2}$/.test(clean.slice(i + 1, i + 3))) {
+            bytes.push(parseInt(clean.slice(i + 1, i + 3), 16));
+            i += 3;
+          } else {
+            bytes.push(clean.charCodeAt(i) & 0xff);
+            i++;
+          }
+        }
+        const u8 = new Uint8Array(bytes);
+        try {
+          return new TextDecoder(charset).decode(u8);
+        } catch (e) {
+          try {
+            return new TextDecoder('utf-8').decode(u8);
+          } catch (e2) {
+            try {
+              return new TextDecoder('gb18030').decode(u8);
+            } catch (e3) {
+              return clean;
+            }
+          }
+        }
+      } else if (encoding === 'base64') {
+        try {
+          const cleanB64 = body.replace(/[^A-Za-z0-9+/=]/g, '');
+          const binary = atob(cleanB64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          try {
+            return new TextDecoder(charset).decode(bytes);
+          } catch (e) {
+            return new TextDecoder('utf-8').decode(bytes);
+          }
+        } catch (e) {
+          return body;
+        }
+      }
+      return body;
+    }
+
+    function extractMailBodies(rawBody, contentType, topEncoding = '') {
+      let html = '';
+      let text = '';
+      const topCharset = extractCharset(contentType);
+
+      if (contentType.toLowerCase().includes('multipart/')) {
+        const boundaryMatch = contentType.match(/boundary=["']?([^"';]+)["']?/i);
+        if (boundaryMatch) {
+          const boundary = boundaryMatch[1];
+          const parts = rawBody.split(new RegExp(`--${boundary}(?:--)?`));
+          for (const part of parts) {
+            const partHeaderEnd = part.search(/\r?\n\r?\n/);
+            if (partHeaderEnd === -1) continue;
+            const pHeaders = part.slice(0, partHeaderEnd);
+            const pBody = part.slice(partHeaderEnd).replace(/^\r?\n\r?\n/, '');
+
+            const pTypeMatch = pHeaders.match(/Content-Type:[ \t]*([^;\r\n]+)/i);
+            const pType = pTypeMatch ? pTypeMatch[1].trim().toLowerCase() : '';
+            const pFullTypeMatch = pHeaders.match(/Content-Type:[ \t]*([^\r\n]+)/i);
+            const pFullType = pFullTypeMatch ? pFullTypeMatch[1] : '';
+            const pCharset = extractCharset(pFullType) || topCharset;
+
+            const pEncodingMatch = pHeaders.match(/Content-Transfer-Encoding:[ \t]*([^\r\n]+)/i);
+            const pEncoding = pEncodingMatch ? pEncodingMatch[1].trim().toLowerCase() : topEncoding.toLowerCase();
+
+            let decodedBody = decodeTransferEncoding(pBody, pEncoding, pCharset);
+            if (pType.includes('text/html') && !html) {
+              html = decodedBody;
+            } else if (pType.includes('text/plain') && !text) {
+              text = decodedBody;
+            }
+          }
+        }
+      } else {
+        const encodingMatch = contentType.match(/Content-Transfer-Encoding:[ \t]*([^\r\n]+)/i);
+        const encoding = encodingMatch ? encodingMatch[1].trim().toLowerCase() : topEncoding.toLowerCase();
+        const pCharset = topCharset;
+        const cleanBody = rawBody.replace(/^\r?\n\r?\n/, '');
+        const decoded = decodeTransferEncoding(cleanBody, encoding, pCharset);
+        if (contentType.toLowerCase().includes('text/html')) {
+          html = decoded;
+        } else {
+          text = decoded;
+        }
+      }
+
+      if (!text && html) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        text = temp.textContent || temp.innerText || '';
+      }
+      if (!html && text) {
+        html = `<div style="font-family:-apple-system,sans-serif;white-space:pre-wrap;padding:16px;line-height:1.5;">${escapeHtml(text)}</div>`;
+      }
+
+      return { html, text };
+    }
+
+    // High Precision Verification Code Extractor
+    function extractVerificationCode(subject, text, html) {
+      const fullSearchContent = `${subject}\n${text}\n${html}`;
+
+      // SpaceXAI confirmation code (e.g. 499-631 or 769-154)
+      const spaceXMatch = subject.match(/(?:confirmation|verification)\s*code:?\s*([0-9]{3}-[0-9]{3})/i);
+      if (spaceXMatch) return spaceXMatch[1];
+
+      // Explicit prefix in subject
+      const subPrefixMatch = subject.match(/(?:code|验证码|校验码|确认码|PIN)[:\s]+([0-9]{3}-[0-9]{3}|[0-9]{4,8})/i);
+      if (subPrefixMatch) return subPrefixMatch[1];
+
+      // Explicit prefix in text body
+      const bodyPrefixMatch = text.match(/(?:验证码|确认码|校验码|动态码|code\s+is|verification\s+code\s+is|code:?|is:?)[^\n0-9]{0,20}?([0-9]{3}-[0-9]{3}|[0-9]{6}|[0-9]{4}|[0-9]{8})\b/i);
+      if (bodyPrefixMatch) return bodyPrefixMatch[1];
+
+      // Prominent dash formatted code (e.g. 123-456)
+      const dashCodeMatch = fullSearchContent.match(/\b([0-9]{3}-[0-9]{3})\b/);
+      if (dashCodeMatch) return dashCodeMatch[1];
+
+      // Standalone 6-digit code
+      const sixDigitMatch = text.match(/\b([0-9]{6})\b/);
+      if (sixDigitMatch) return sixDigitMatch[1];
+
+      return null;
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    // API Calls
+    async function fetchMails(manual = false) {
+      if (!state.adminPassword) {
+        document.getElementById('authGateModal').classList.remove('hidden');
+        return;
+      }
+
+      try {
+        let url = `${state.apiUrl}/admin/mails?limit=${state.pageSize}&offset=${(state.page - 1) * state.pageSize}`;
+        if (state.searchKeyword) {
+          url += `&address=${encodeURIComponent(state.searchKeyword)}`;
+        }
+
+        const res = await fetch(url, {
+          headers: {
+            'x-admin-auth': state.adminPassword
+          }
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            lockConsole(true);
+            return;
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const rawResults = data.results || [];
+        state.totalCount = data.count || rawResults.length;
+
+        const parsedMails = rawResults.map(parseMail);
+
+        let hasNew = false;
+        parsedMails.forEach(m => {
+          if (!state.knownMailIds.has(m.id)) {
+            state.knownMailIds.add(m.id);
+            if (state.knownMailIds.size > parsedMails.length) {
+              hasNew = true;
+            }
+          }
+        });
+
+        if (hasNew) {
+          playChime();
+          const latest = parsedMails[0];
+          if (latest?.otpCode) {
+            showToast(`🎉 收到验证码: ${latest.otpCode}`, 'success');
+          } else {
+            showToast(`📬 收到新邮件: ${latest?.subject?.slice(0, 20)}`, 'info');
+          }
+        }
+
+        state.mails = parsedMails;
+        renderMailList();
+
+        if (manual) showToast(`已刷新 (${parsedMails.length} 封)`, 'success');
+      } catch (e) {
+        console.error('Fetch error:', e);
+        if (manual) showToast(`连接失败: ${e.message}`, 'error');
+      }
+    }
+
+    // Render Mail Cards (Exact Reference mem0 Layout)
+    function renderMailList() {
+      const container = document.getElementById('mailListContainer');
+      document.getElementById('totalMailsCount').innerText = state.totalCount;
+
+      if (state.mails.length === 0) {
+        container.innerHTML = `
+          <div class="app-card rounded-2xl p-8 text-center flex flex-col items-center justify-center" style="color: var(--text-muted);">
+            <div class="w-12 h-12 rounded-2xl btn-sec flex items-center justify-center text-lg mb-2">
+              <i class="fa-regular fa-folder-open"></i>
+            </div>
+            <p class="text-sm font-bold" style="color: var(--text-main);">收件箱暂无邮件</p>
+            <p class="text-xs mt-1" style="color: var(--text-muted);">${state.searchKeyword ? '未找到符合条件的邮件，点击「全部」重置' : '点击上方「生成并复制」获取邮箱注册'}</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      state.mails.forEach(mail => {
+        const card = document.createElement('div');
+        card.className = 'app-card rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer';
+        card.onclick = () => window.openMailDetail(mail.id);
+
+        const timeAgo = formatTime(mail.createdAt);
+
+        card.innerHTML = `
+          <!-- Main Subject -->
+          <div class="font-bold text-sm sm:text-base leading-snug break-words" style="color: var(--text-main);">
+            ${escapeHtml(mail.subject)}
+          </div>
+
+          <!-- Highlight OTP Capsule (Prominent Yellow) -->
+          ${mail.otpCode ? `
+            <div class="otp-capsule rounded-xl p-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-key text-amber-500 text-sm"></i>
+                <span class="font-mono font-bold text-lg tracking-wider" style="color: var(--text-main);">${mail.otpCode}</span>
+              </div>
+              <button onclick="event.stopPropagation(); copyOtpCode('${mail.otpCode}')" class="px-3.5 py-1.5 btn-yellow active:scale-95 text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i>
+                <span>复制验证码</span>
+              </button>
+            </div>
+          ` : ''}
+
+          <!-- Metadata & Action Buttons Row (Matching Reference) -->
+          <div class="flex items-center justify-between pt-1 text-xs" style="color: var(--text-muted);">
+            <!-- Left: Time + Address Tag -->
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="flex items-center gap-1 shrink-0">
+                <i class="fa-regular fa-clock text-[11px]"></i>
+                <span>${timeAgo}</span>
+              </span>
+              <span class="font-mono text-xs truncate max-w-[170px]" style="color: var(--text-sub);">
+                ${escapeHtml(mail.address)}
+              </span>
+            </div>
+
+            <!-- Right: Action Capsules -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="event.stopPropagation(); window.openMailDetail(${mail.id})" class="px-2.5 py-1 rounded-lg btn-sec text-xs font-medium hover:text-amber-500 transition-colors">
+                <span>详情</span>
+              </button>
+              <button onclick="event.stopPropagation(); deleteMailItem(${mail.id})" class="px-2.5 py-1 rounded-lg del-btn text-xs font-semibold hover:opacity-80 transition-opacity">
+                <span>删除</span>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Update Pagination
+      const totalPages = Math.ceil(state.totalCount / state.pageSize) || 1;
+      const pagBar = document.getElementById('paginationBar');
+      if (totalPages > 1) {
+        pagBar.classList.remove('hidden');
+        document.getElementById('pageIndicator').innerText = `${state.page} / ${totalPages}`;
+        document.getElementById('prevPageBtn').disabled = state.page <= 1;
+        document.getElementById('nextPageBtn').disabled = state.page >= totalPages;
+      } else {
+        pagBar.classList.add('hidden');
+      }
+    }
+
+    function formatTime(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr.replace(' ', 'T') + 'Z');
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const h = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${m}-${day} ${h}:${min}`;
+    }
+
+    // Global Safe Open Detail Function (Bug-Free & Responsive)
+    window.openMailDetail = function(mailId) {
+      const mail = state.mails.find(m => m.id === mailId);
+      if (!mail) {
+        showToast('找不到该邮件信息', 'error');
+        return;
+      }
+      state.currentDetailMail = mail;
+      const drawer = document.getElementById('mobileDrawer');
+      const body = document.getElementById('mobileDrawerBody');
+
+      body.innerHTML = `
+        <div class="border-b pb-3" style="border-color: var(--card-border);">
+          <h2 class="text-base sm:text-lg font-bold mb-2 leading-snug" style="color: var(--text-main);">${escapeHtml(mail.subject)}</h2>
+          <div class="flex flex-col gap-1 text-xs" style="color: var(--text-muted);">
+            <div><span>发件人:</span> <span class="font-mono" style="color: var(--text-sub);">${escapeHtml(mail.source)}</span></div>
+            <div><span>收件邮箱:</span> <span class="font-mono font-bold" style="color: var(--text-main);">${escapeHtml(mail.address)}</span></div>
+            <div><span>收信时间:</span> <span>${mail.createdAt || mail.date}</span></div>
+          </div>
+        </div>
+
+        ${mail.otpCode ? `
+          <div class="otp-capsule rounded-xl p-3 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-[10px] uppercase font-bold tracking-wider opacity-80">提取到的验证码</div>
+              <div class="text-2xl font-mono font-bold tracking-widest text-amber-500">${mail.otpCode}</div>
+            </div>
+            <button onclick="copyOtpCode('${mail.otpCode}')" class="px-4 py-2 btn-yellow active:scale-95 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5">
+              <i class="fa-regular fa-copy"></i>
+              <span>复制验证码</span>
+            </button>
+          </div>
+        ` : ''}
+
+        <!-- Clean HTML / Text Viewport -->
+        <div class="flex-1 bg-white rounded-xl overflow-hidden min-h-[360px] border" style="border-color: var(--card-border);">
+          <iframe id="drawerIframe" sandbox="allow-same-origin allow-popups" class="w-full h-full min-h-[360px] border-0"></iframe>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="flex items-center justify-between pt-2 border-t" style="border-color: var(--card-border);">
+          <button onclick="deleteMailItem(${mail.id}); closeMobileDrawer();" class="px-3 py-1.5 rounded-lg del-btn text-xs font-semibold flex items-center gap-1">
+            <i class="fa-regular fa-trash-can"></i>
+            <span>删除本邮件</span>
+          </button>
+          <button onclick="closeMobileDrawer()" class="px-4 py-1.5 btn-sec text-xs font-semibold rounded-lg">关闭</button>
+        </div>
+      `;
+
+      // Set iframe content safely via srcdoc
+      const frame = document.getElementById('drawerIframe');
+      if (frame) {
+        let contentHtml = mail.html;
+        if (contentHtml) {
+          if (!/<meta[^>]+charset/i.test(contentHtml)) {
+            contentHtml = `<meta charset="utf-8">\n` + contentHtml;
+          }
+        } else {
+          contentHtml = `<meta charset="utf-8">\n<div style="font-family:-apple-system,sans-serif;padding:16px;white-space:pre-wrap;line-height:1.5;color:#1e293b;">${escapeHtml(mail.text)}</div>`;
+        }
+        frame.srcdoc = contentHtml;
+      }
+
+      drawer.classList.remove('hidden');
+    };
+
+    function closeMobileDrawer() {
+      document.getElementById('mobileDrawer').classList.add('hidden');
+    }
+
+    // Address Generation & Clipboard
+    async function generateNewAddress() {
+      const quickSpan = document.getElementById('quickGeneratedAddr');
+      quickSpan.innerText = '正在生成随机邮箱...';
+      try {
+        const res = await fetch(`${state.apiUrl}/api/new_address`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const newAddr = data.address;
+        quickSpan.innerText = newAddr;
+        navigator.clipboard.writeText(newAddr);
+        showToast(`已生成并复制: ${newAddr}`, 'success');
+
+        // Automatically set into search input and filter!
+        document.getElementById('searchInput').value = newAddr;
+        executeSearch();
+      } catch (e) {
+        const randStr = Math.random().toString(36).substring(2, 10);
+        const fallbackAddr = `tmp_${randStr}@5i.wiki`;
+        quickSpan.innerText = fallbackAddr;
+        navigator.clipboard.writeText(fallbackAddr);
+        showToast(`已生成并复制: ${fallbackAddr}`, 'info');
+        document.getElementById('searchInput').value = fallbackAddr;
+        executeSearch();
+      }
+    }
+
+    function copyOtpCode(code) {
+      if (!code) return;
+      navigator.clipboard.writeText(code);
+      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      showToast(`🎉 验证码 ${code} 已复制！`, 'success');
+    }
+
+    // Delete Operations
+    async function deleteMailItem(id) {
+      if (!confirm('确认删除此邮件吗？')) return;
+      try {
+        const res = await fetch(`${state.apiUrl}/admin/mails/${id}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-auth': state.adminPassword }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('已删除', 'success');
+        fetchMails();
+      } catch (e) {
+        showToast(`删除失败: ${e.message}`, 'error');
+      }
+    }
+
+    async function confirmClearMails() {
+      if (!confirm('警告：确定要清空收件箱中的全部邮件吗？此操作无法撤销！')) return;
+      try {
+        const res = await fetch(`${state.apiUrl}/admin/cleanup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-auth': state.adminPassword
+          },
+          body: JSON.stringify({ clean_type: 'mails' })
+        });
+        showToast('已执行清空', 'success');
+        fetchMails();
+      } catch (e) {
+        showToast(`清空失败: ${e.message}`, 'error');
+      }
+    }
+
+    // Polling Loop
+    function togglePolling() {
+      state.isPolling = !state.isPolling;
+      const icon = document.getElementById('pollIcon');
+
+      if (state.isPolling) {
+        icon.className = 'fa-solid fa-arrows-rotate text-emerald-500 text-[10px]';
+        startPolling();
+        showToast('已开启自动刷新', 'info');
+      } else {
+        stopPolling();
+        icon.className = 'fa-solid fa-pause text-slate-400 text-[10px]';
+        document.getElementById('pollCountdown').innerText = '-';
+        showToast('已暂停自动刷新', 'info');
+      }
+    }
+
+    function startPolling() {
+      stopPolling();
+      state.countdown = state.pollInterval;
+      document.getElementById('pollCountdown').innerText = state.countdown;
+
+      state.countdownTimer = setInterval(() => {
+        if (!state.isPolling) return;
+        state.countdown--;
+        if (state.countdown <= 0) {
+          state.countdown = state.pollInterval;
+          fetchMails();
+        }
+        document.getElementById('pollCountdown').innerText = state.countdown;
+      }, 1000);
+    }
+
+    function stopPolling() {
+      if (state.countdownTimer) clearInterval(state.countdownTimer);
+    }
+
+    // Pagination
+    function prevPage() {
+      if (state.page > 1) {
+        state.page--;
+        fetchMails();
+      }
+    }
+    function nextPage() {
+      state.page++;
+      fetchMails();
+    }
+
+    // Auth Gate
+    function toggleAuthGatePwdVisibility() {
+      const input = document.getElementById('authGatePassword');
+      const icon = document.getElementById('authGateEyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const pwdInput = document.getElementById('authGatePassword');
+      const errBox = document.getElementById('authErrorMessage');
+      const errText = document.getElementById('authErrorText');
+      const submitBtn = document.getElementById('authSubmitBtn');
+      const pwd = pwdInput.value.trim();
+
+      if (!pwd) return;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1"></i><span>验证中...</span>`;
+      errBox.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${state.apiUrl}/admin/mails?limit=1&offset=0`, {
+          headers: { 'x-admin-auth': pwd }
+        });
+
+        if (res.ok) {
+          state.adminPassword = pwd;
+          localStorage.setItem('tm_admin_pwd', pwd);
+          document.getElementById('authGateModal').classList.add('hidden');
+          pwdInput.value = '';
+          showToast('验证成功，已解密', 'success');
+          fetchMails(true);
+          startPolling();
+        } else if (res.status === 401) {
+          errText.innerText = '管理员密码错误，请重新输入';
+          errBox.classList.remove('hidden');
+          pwdInput.focus();
+        } else {
+          errText.innerText = `验证异常: HTTP ${res.status}`;
+          errBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        errText.innerText = `连接失败: ${err.message}`;
+        errBox.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>解密并进入</span><i class="fa-solid fa-arrow-right text-xs"></i>`;
+      }
+    }
+
+    function lockConsole(silent = false) {
+      state.adminPassword = '';
+      localStorage.removeItem('tm_admin_pwd');
+      stopPolling();
+      state.mails = [];
+      state.totalCount = 0;
+      renderMailList();
+      document.getElementById('authGateModal').classList.remove('hidden');
+      document.getElementById('authGatePassword').value = '';
+      document.getElementById('authErrorMessage').classList.add('hidden');
+      document.getElementById('authGatePassword').focus();
+      if (!silent) showToast('已锁定控制台', 'info');
+    }
+
+    // Settings Modal
+    function openSettingsModal() {
+      document.getElementById('settingApiUrl').value = state.apiUrl;
+      document.getElementById('settingAdminPassword').value = state.adminPassword;
+      document.getElementById('settingSoundToggle').checked = state.soundEnabled;
+      document.getElementById('settingPollInterval').value = state.pollInterval;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    function togglePasswordVisibility() {
+      const input = document.getElementById('settingAdminPassword');
+      const icon = document.getElementById('pwdEyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function saveSettings() {
+      state.apiUrl = document.getElementById('settingApiUrl').value.trim() || 'https://temp-email-api.5i.wiki';
+      state.adminPassword = document.getElementById('settingAdminPassword').value.trim();
+      state.soundEnabled = document.getElementById('settingSoundToggle').checked;
+      state.pollInterval = parseInt(document.getElementById('settingPollInterval').value, 10);
+
+      localStorage.setItem('tm_api_url', state.apiUrl);
+      localStorage.setItem('tm_admin_pwd', state.adminPassword);
+      localStorage.setItem('tm_sound_enabled', state.soundEnabled);
+      localStorage.setItem('tm_poll_interval', state.pollInterval);
+
+      closeSettingsModal();
+      showToast('设置已保存', 'success');
+      startPolling();
+      fetchMails(true);
+    }
+
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+      applyTheme(state.theme);
+      if (!state.adminPassword) {
+        document.getElementById('authGateModal').classList.remove('hidden');
+      } else {
+        document.getElementById('authGateModal').classList.add('hidden');
+        fetchMails();
+        startPolling();
+      }
+    });
+  </script>
+</body>
+</html>

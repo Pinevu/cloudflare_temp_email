@@ -122,6 +122,14 @@
     }
 
     .safe-top { padding-top: max(0.5rem, env(safe-area-inset-top, 0px)); }
+    /* Installed iOS PWA: keep the toolbar below the Dynamic Island/status area. */
+    @media (display-mode: standalone) {
+      .app-header.safe-top { padding-top: max(3.25rem, env(safe-area-inset-top, 0px)); }
+    }
+    @media (display-mode: standalone) and (max-width: 430px) {
+      .app-header > div { gap: 0.25rem; }
+      .app-header .font-bold.text-sm { letter-spacing: -0.025em; }
+    }
     .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)); }
 
     /* Component Classes */

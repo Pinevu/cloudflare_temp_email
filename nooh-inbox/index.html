@@ -433,7 +433,7 @@
     // State Store
     const state = {
       theme: localStorage.getItem('tm_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-      apiUrl: localStorage.getItem('tm_api_url') || (window.location.origin.includes('5i.wiki') ? window.location.origin : 'https://temp-email-api.5i.wiki'),
+      apiUrl: localStorage.getItem('tm_api_url') || (window.location.origin.includes('nooh.cc') ? 'https://temp-email-api.nooh.cc' : (window.location.origin.includes('5i.wiki') ? window.location.origin : 'https://temp-email-api.nooh.cc')),
       adminPassword: localStorage.getItem('tm_admin_pwd') || '',
       soundEnabled: localStorage.getItem('tm_sound_enabled') !== 'false',
       pollInterval: parseInt(localStorage.getItem('tm_poll_interval') || '5', 10),
